@@ -1,9 +1,8 @@
 import { z } from 'zod'
 import { db } from '@/lib/db'
-import { achievements } from '@/lib/db/schema/achievements'
-import { userAchievements } from '@/lib/db/schema/userAchievements'
+import { achievements, userAchievements } from '@/lib/db/schema/schema'
 import { eq, and, inArray } from 'drizzle-orm'
-import { checkAchievementProgress } from '@/lib/achievements/checkProgress'
+import { checkProgress as checkAchievementProgress } from '@/lib/achievements/checkProgress'
 import { auth } from '@/lib/auth'
 
 const checkProgressSchema = z.object({
@@ -17,7 +16,7 @@ export async function checkProgress(input: z.infer<typeof checkProgressSchema>) 
   }
 
   await checkAchievementProgress({
-    achievementId: input.achievementId,
+    achievementId: parseInt(input.achievementId),
     userId,
     tenantId,
   })
@@ -79,7 +78,7 @@ export async function getAvailableAchievements() {
   const filteredAchievements = availableAchievements.map(achievement => ({
     ...achievement,
     isCompleted: completedIds.has(achievement.id),
-    prerequisitesMet: achievement.prerequisites.every(p => completedIds.has(p.id)),
+    prerequisitesMet: Array.isArray(achievement.prerequisites) ? (achievement.prerequisites as any[]).every(p => completedIds.has(p.id)) : false,
   }))
 
   return filteredAchievements
@@ -93,7 +92,7 @@ export async function getAchievementProgress(achievementId: string) {
 
   const achievement = await db.query.achievements.findFirst({
     where: and(
-      eq(achievements.id, achievementId),
+      eq(achievements.id, parseInt(achievementId)),
       eq(achievements.tenantId, tenantId)
     ),
   })
@@ -103,7 +102,7 @@ export async function getAchievementProgress(achievementId: string) {
   }
 
   const progress = await checkAchievementProgress({
-    achievementId,
+    achievementId: parseInt(achievementId),
     userId,
     tenantId,
   })
@@ -112,4 +111,4 @@ export async function getAchievementProgress(achievementId: string) {
     achievement,
     progress,
   }
-} 
+}
