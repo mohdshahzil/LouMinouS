@@ -1,5 +1,5 @@
 import type { Config } from 'drizzle-kit'
-import * as dotenv from 'dotenv'
+import dotenv from 'dotenv'
 dotenv.config()
 
 if (!process.env.DATABASE_URL) {
@@ -26,4 +26,4 @@ export default {
   },
   verbose: true,
   strict: true,
-} satisfies Config 
+} satisfies Config
